@@ -14,21 +14,30 @@ export default function App() {
   const [review, setReview] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  async function handleReview() {
+ async function handleReview() {
     if (!code.trim()) return
     setLoading(true)
     setReview(null)
 
-    // We'll connect this to the real AI in Week 2
-    // For now, simulate a response
-    setTimeout(() => {
-      setReview([
-        { type: 'error', line: 'Line 2–3', text: 'No error handling — if fetch fails, the app will crash silently.' },
-        { type: 'warning', line: 'Line 2', text: 'Consider checking res.ok before calling res.json().' },
-        { type: 'good', line: 'Line 1', text: 'Good use of async/await — clean and readable.' },
-      ])
+    try {
+      const response = await fetch('http://localhost:3001/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        setReview([{ type: 'error', line: '', text: data.error }])
+      } else {
+        setReview(data.review)
+      }
+    } catch (err) {
+      setReview([{ type: 'error', line: '', text: 'Could not reach the server. Make sure it is running.' }])
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   function handleClear() {
